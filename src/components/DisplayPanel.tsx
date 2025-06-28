@@ -1,9 +1,23 @@
 import { useState, useEffect } from "react";
 import FancyButton from "./FancyButton";
+import LandingPage from "./LandingPage";
+import HomeLanding from "./HomeLanding";
+import { useRoomWebSocket } from "../hooks/useRoomWebSocket";
+
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 export default function DisplayPanel() {
   const [darkMode, setDarkMode] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [roomCode, setRoomCode] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
+  const [users, setUsers] = useState<string[]>([]);
+  const [stage, setStage] = useState<'home' | 'join' | 'room'>('home');
+  const [taskCode, setTaskCode] = useState("TASK-1234");
+  const [editingTask, setEditingTask] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -12,6 +26,38 @@ export default function DisplayPanel() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // WebSocket logic
+  useRoomWebSocket({
+    roomCode,
+    userName,
+    onUserList: setUsers,
+    onRoomCreated: (code) => setRoomCode(code),
+  });
+
+  // HomeLanding: create or join
+  if (stage === 'home') {
+    return <HomeLanding
+      onCreate={() => {
+        const code = generateRoomCode();
+        setRoomCode(code);
+        setStage('join');
+      }}
+      onJoin={code => {
+        setRoomCode(code);
+        setStage('join');
+      }}
+    />;
+  }
+
+  // LandingPage: enter name for room
+  if (!userName && roomCode && stage === 'join') {
+    return <LandingPage onJoin={(name) => {
+      setUserName(name);
+      setStage('room');
+    }} roomCode={roomCode} />;
+  }
+
+  // Room: show display panel
   return (
     <div
       className={`flex-[2] border border-gray-400 p-2 sm:p-4 ml-0 sm:ml-4 flex flex-col justify-between rounded-md shadow-md transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
@@ -39,13 +85,25 @@ export default function DisplayPanel() {
       </button>
       <div className="flex justify-between items-center mb-2">
         <div style={{ fontFamily: 'Honk' }} className="text-lg sm:text-3xl font-bold text-center border border-gray-400 p-2 sm:p-4 mb-4 sm:mb-6 rounded flex-1">
-          MAR-4114
+          {editingTask ? (
+            <input
+              className="bg-transparent border-b border-gray-400 outline-none text-center w-32 sm:w-48 text-lg sm:text-3xl font-bold"
+              value={taskCode}
+              onChange={e => setTaskCode(e.target.value)}
+              onBlur={() => setEditingTask(false)}
+              onKeyDown={e => { if (e.key === 'Enter') setEditingTask(false); }}
+              autoFocus
+              style={{ fontFamily: 'Honk' }}
+            />
+          ) : (
+            <span onClick={() => setEditingTask(true)} className="cursor-pointer select-text">{taskCode}</span>
+          )}
         </div>
       </div>
       <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3'} gap-2 sm:gap-4 text-center`}>
-        {Array.from({ length: 12 }).map((_, i) => (
+        {users.concat(Array.from({ length: 12 - users.length }).map(() => "")).map((name, i) => (
           <div key={i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base" style={{ fontFamily: 'Revalia' }}>
-            John Doe - ?
+            {name ? name : <span className="text-gray-400">Empty</span>}
           </div>
         ))}
       </div>
@@ -60,6 +118,16 @@ export default function DisplayPanel() {
             <FancyButton key={i} label={label} />
           ))}
         </div>
+      </div>
+      <div className="flex justify-center mt-4">
+        <button
+          className="px-4 py-2 rounded bg-gradient-to-br from-lime-400 to-teal-400 text-white font-bold shadow hover:from-lime-500 hover:to-teal-500 transition-colors duration-200"
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href.split('?')[0] + `?room=${roomCode}`);
+          }}
+        >
+          Copy Invite Link
+        </button>
       </div>
     </div>
   );

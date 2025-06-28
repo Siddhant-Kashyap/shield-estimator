@@ -65,7 +65,7 @@ const TableWithChairs: React.FC = () => {
     );
   }
   return (
-    <div className="relative w-45 h-[340px] mt-40 mx-auto border border-black bg-orange-950 rounded-md shadow-md">
+    <div className="relative w-45 h-[340px] mt-40 mx-auto border border-black bg-[#C19A6B] rounded-md shadow-md">
       {chairs}
     </div>
   );
