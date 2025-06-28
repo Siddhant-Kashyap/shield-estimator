@@ -1,6 +1,8 @@
 import React from "react";
+import useStore from "../hooks/userHooks";
 
 const TableWithChairs: React.FC = () => {
+  const players = useStore((state) => state.players);
   // Adjusted table size to match w-45 (180px) and h-[340px]
   const tableWidth = 180; // px (w-45 = 180px)
   const tableHeight = 340; // px (h-[340px])
@@ -37,6 +39,10 @@ const TableWithChairs: React.FC = () => {
   ];
   for (let i = 0; i < 12; i++) {
     const pos = positions[i];
+    let label = "";
+    if (players[i]) {
+      label = players[i].name.slice(0, 4).toUpperCase();
+    }
     chairs.push(
       <div
         key={i}
@@ -58,7 +64,7 @@ const TableWithChairs: React.FC = () => {
           }}
         >
           <span className="text-xs font-bold text-gray-700 pb-1 bg-white bg-opacity-70 rounded px-1">
-            {}
+            {label}
           </span>
         </div>
       </div>

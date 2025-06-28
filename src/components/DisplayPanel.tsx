@@ -3,6 +3,7 @@ import FancyButton from "./FancyButton";
 import LandingPage from "./LandingPage";
 import HomeLanding from "./HomeLanding";
 import { useRoomWebSocket } from "../hooks/useRoomWebSocket";
+import useStore from "../hooks/userHooks";
 
 function generateRoomCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -14,10 +15,12 @@ export default function DisplayPanel() {
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
-  const [users, setUsers] = useState<string[]>([]);
   const [stage, setStage] = useState<'home' | 'join' | 'room'>('home');
   const [taskCode, setTaskCode] = useState("TASK-1234");
   const [editingTask, setEditingTask] = useState(false);
+
+  const players = useStore((state) => state.players);
+  const setPlayers = useStore((state) => state.setPlayers);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -30,7 +33,14 @@ export default function DisplayPanel() {
   useRoomWebSocket({
     roomCode,
     userName,
-    onUserList: setUsers,
+    onUserList: (userNames) => {
+      // Map user names to Player objects (id = name, no card/position for now)
+      setPlayers(userNames.map((name, idx) => ({
+        id: name,
+        name,
+        position: [0, 0, idx],
+      })));
+    },
     onRoomCreated: (code) => setRoomCode(code),
   });
 
@@ -101,9 +111,14 @@ export default function DisplayPanel() {
         </div>
       </div>
       <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3'} gap-2 sm:gap-4 text-center`}>
-        {users.concat(Array.from({ length: 12 - users.length }).map(() => "")).map((name, i) => (
+        {players.map((player, i) => (
           <div key={i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base" style={{ fontFamily: 'Revalia' }}>
-            {name ? name : <span className="text-gray-400">Empty</span>}
+            {player.name ? player.name : <span className="text-gray-400">Empty</span>}
+          </div>
+        ))}
+        {Array.from({ length: 12 - players.length }).map((_, i) => (
+          <div key={players.length + i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base" style={{ fontFamily: 'Revalia' }}>
+            <span className="text-gray-400">Empty</span>
           </div>
         ))}
       </div>
