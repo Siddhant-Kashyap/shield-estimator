@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import FancyButton from "./FancyButton";
 import LandingPage from "./LandingPage";
 import HomeLanding from "./HomeLanding";
 import { useRoomWebSocket } from "../hooks/useRoomWebSocket";
@@ -13,7 +12,6 @@ export default function DisplayPanel() {
   const [darkMode, setDarkMode] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [roomCode, setRoomCode] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
   const [stage, setStage] = useState<'home' | 'join' | 'room'>('home');
   const [taskCode, setTaskCode] = useState("TASK-1234");

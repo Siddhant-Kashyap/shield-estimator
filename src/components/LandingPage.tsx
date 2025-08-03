@@ -2,7 +2,6 @@ import { useState } from "react";
 
 export default function LandingPage({ onJoin, roomCode }: { onJoin: (name: string) => void, roomCode?: string }) {
   const [name, setName] = useState("");
-  const [room, setRoom] = useState(roomCode || "");
   const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
