@@ -4,8 +4,6 @@ import useStore from "../hooks/userHooks";
 const TableWithChairs: React.FC = () => {
   const players = useStore((state) => state.players);
   const revealed = useStore((state) => state.revealed);
-  // Get current user id (assume stored in localStorage)
-  const myId = window.localStorage.getItem('userId');
   // Adjusted table size to match w-45 (180px) and h-[340px]
   const tableWidth = 180; // px (w-45 = 180px)
   const tableHeight = 340; // px (h-[340px])
@@ -50,10 +48,6 @@ const TableWithChairs: React.FC = () => {
         if (revealed) {
           cardDisplay = (
             <span className="ml-1 text-green-700 font-bold">{players[i].card}</span>
-          );
-        } else if (players[i].id === myId) {
-          cardDisplay = (
-            <span className="ml-1 text-blue-700 font-bold">{players[i].card}</span>
           );
         } else {
           cardDisplay = (
