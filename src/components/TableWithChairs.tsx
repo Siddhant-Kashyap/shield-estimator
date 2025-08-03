@@ -72,7 +72,7 @@ const TableWithChairs: React.FC = () => {
         <div
           className="w-full h-full  border-black rounded-b-md flex items-end justify-center bg-center bg-no-repeat bg-contain"
           style={{
-            backgroundImage: "url('/src/assets/chair.png')",
+            backgroundImage: "url('/chair.png')",
             backgroundColor: 'white',
           }}
         >
