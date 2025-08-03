@@ -51,6 +51,9 @@ export default function DisplayPanel() {
       setUserId(id);
       window.localStorage.setItem('userId', id);
     },
+    onTaskCodeUpdated: (newTaskCode: string) => {
+      setTaskCode(newTaskCode);
+    },
   });
 
   // HomeLanding: create or join
@@ -111,6 +114,16 @@ export default function DisplayPanel() {
     }
   };
 
+  // Task code update handler
+  const handleTaskCodeChange = (newTaskCode: string) => {
+    setTaskCode(newTaskCode);
+    if (wsRef.current) {
+      wsRef.current.send(
+        JSON.stringify({ type: "updateTaskCode", roomCode, taskCode: newTaskCode })
+      );
+    }
+  };
+
   return (
     <div
       className={`flex-[2] border border-gray-400 p-2 sm:p-4 ml-0 sm:ml-4 flex flex-col justify-between rounded-md shadow-md transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
@@ -142,7 +155,7 @@ export default function DisplayPanel() {
             <input
               className="bg-transparent border-b border-gray-400 outline-none text-center w-32 sm:w-48 text-lg sm:text-3xl font-bold"
               value={taskCode}
-              onChange={e => setTaskCode(e.target.value)}
+              onChange={e => handleTaskCodeChange(e.target.value)}
               onBlur={() => setEditingTask(false)}
               onKeyDown={e => { if (e.key === 'Enter') setEditingTask(false); }}
               autoFocus
