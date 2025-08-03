@@ -16,7 +16,7 @@ export function useRoomWebSocket({ roomCode, userName, onUserList, onRoomCreated
 
   useEffect(() => {
     if (!roomCode) return;
-    const ws = new WebSocket("ws://localhost:8080");
+    const ws = new WebSocket("wss://scrum-circle-backend-production.up.railway.app");
     wsRef.current = ws;
 
     ws.onopen = () => {
