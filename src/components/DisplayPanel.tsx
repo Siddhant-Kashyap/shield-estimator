@@ -22,7 +22,7 @@ export default function DisplayPanel() {
 
   const players = useStore((state) => state.players);
   const setPlayers = useStore((state) => state.setPlayers);
-  const { setCard, revealed, revealCards } = useStore();
+  const { setCard, revealed, revealCards, resetCards } = useStore();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -45,6 +45,7 @@ export default function DisplayPanel() {
     onRoomCreated: (code) => setRoomCode(code),
     onCard: (id, card) => setCard(id, card),
     onReveal: () => revealCards(),
+    onReset: () => resetCards(),
     onHost: () => {},
     onUserId: (id: string) => {
       setUserId(id);
@@ -96,6 +97,16 @@ export default function DisplayPanel() {
     if (wsRef.current) {
       wsRef.current.send(
         JSON.stringify({ type: "revealCards", roomCode })
+      );
+    }
+  };
+
+  // Reset handler (anyone can reset)
+  const handleReset = () => {
+    resetCards();
+    if (wsRef.current) {
+      wsRef.current.send(
+        JSON.stringify({ type: "resetCards", roomCode })
       );
     }
   };
@@ -202,17 +213,24 @@ export default function DisplayPanel() {
           ))}
         </div>
       </div>
-      {/* Reveal button for all users */}
-      {!revealed && (
-        <div className="flex justify-center mt-4">
+      {/* Reveal/Reset button for all users */}
+      <div className="flex justify-center mt-4">
+        {!revealed ? (
           <button
             className="px-4 py-2 rounded bg-gradient-to-br from-orange-400 to-red-400 text-white font-bold shadow hover:from-orange-500 hover:to-red-500 transition-colors duration-200"
             onClick={handleReveal}
           >
             Reveal Cards
           </button>
-        </div>
-      )}
+        ) : (
+          <button
+            className="px-4 py-2 rounded bg-gradient-to-br from-blue-400 to-purple-400 text-white font-bold shadow hover:from-blue-500 hover:to-purple-500 transition-colors duration-200"
+            onClick={handleReset}
+          >
+            Reset
+          </button>
+        )}
+      </div>
       <div className="flex justify-center mt-4">
         <button
           className="px-4 py-2 rounded bg-gradient-to-br from-lime-400 to-teal-400 text-white font-bold shadow hover:from-lime-500 hover:to-teal-500 transition-colors duration-200"

@@ -13,6 +13,7 @@ interface StoreState {
   revealed: boolean
   setPlayers: (players: Player[]) => void
   revealCards: () => void
+  resetCards: () => void
   setCard: (id: string, card: number | string) => void
 }
 
@@ -22,6 +23,10 @@ const useStore = create<StoreState>((set) => ({
   revealed: false,
   setPlayers: (players) => set({ players }),
   revealCards: () => set({ revealed: true }),
+  resetCards: () => set((state) => ({
+    revealed: false,
+    players: state.players.map((p) => ({ ...p, card: undefined }))
+  })),
   setCard: (id, card) =>
     set((state) => ({
       players: state.players.map((p) =>
