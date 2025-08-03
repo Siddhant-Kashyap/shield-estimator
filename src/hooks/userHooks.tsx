@@ -3,7 +3,7 @@ import { create } from 'zustand'
 interface Player {
   id: string
   name: string
-  card?: number | '?'
+  card?: number | string
   position: [number, number, number]
 }
 
@@ -13,7 +13,7 @@ interface StoreState {
   revealed: boolean
   setPlayers: (players: Player[]) => void
   revealCards: () => void
-  setCard: (id: string, card: number | '?') => void
+  setCard: (id: string, card: number | string) => void
 }
 
 const useStore = create<StoreState>((set) => ({

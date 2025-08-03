@@ -18,9 +18,11 @@ export default function DisplayPanel() {
   const [stage, setStage] = useState<'home' | 'join' | 'room'>('home');
   const [taskCode, setTaskCode] = useState("TASK-1234");
   const [editingTask, setEditingTask] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const players = useStore((state) => state.players);
   const setPlayers = useStore((state) => state.setPlayers);
+  const { setCard, revealed, revealCards } = useStore();
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -30,18 +32,24 @@ export default function DisplayPanel() {
   }, []);
 
   // WebSocket logic
-  useRoomWebSocket({
+  const wsRef = useRoomWebSocket({
     roomCode,
     userName,
-    onUserList: (userNames) => {
-      // Map user names to Player objects (id = name, no card/position for now)
-      setPlayers(userNames.map((name, idx) => ({
-        id: name,
-        name,
+    onUserList: (users) => {
+      setPlayers(users.map((user, idx) => ({
+        id: user.id,
+        name: user.name,
         position: [0, 0, idx],
       })));
     },
     onRoomCreated: (code) => setRoomCode(code),
+    onCard: (id, card) => setCard(id, card),
+    onReveal: () => revealCards(),
+    onHost: () => {},
+    onUserId: (id: string) => {
+      setUserId(id);
+      window.localStorage.setItem('userId', id);
+    },
   });
 
   // HomeLanding: create or join
@@ -68,6 +76,30 @@ export default function DisplayPanel() {
   }
 
   // Room: show display panel
+  // Find current user id (use userId from server)
+  const myId = userId;
+
+  // Card selection handler
+  const handleCardSelect = (card: any) => {
+    if (!myId) return;
+    setCard(myId, card);
+    if (wsRef.current) {
+      wsRef.current.send(
+        JSON.stringify({ type: "cardSelected", roomCode, userId: myId, card })
+      );
+    }
+  };
+
+  // Reveal handler (anyone can reveal)
+  const handleReveal = () => {
+    revealCards();
+    if (wsRef.current) {
+      wsRef.current.send(
+        JSON.stringify({ type: "revealCards", roomCode })
+      );
+    }
+  };
+
   return (
     <div
       className={`flex-[2] border border-gray-400 p-2 sm:p-4 ml-0 sm:ml-4 flex flex-col justify-between rounded-md shadow-md transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
@@ -111,29 +143,76 @@ export default function DisplayPanel() {
         </div>
       </div>
       <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3'} gap-2 sm:gap-4 text-center`}>
-        {players.map((player, i) => (
-          <div key={i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base" style={{ fontFamily: 'Revalia' }}>
-            {player.name ? player.name : <span className="text-gray-400">Empty</span>}
-          </div>
-        ))}
+        {players.map((player, i) => {
+          let status = null;
+          if (revealed) {
+            status = player.card !== undefined ? (
+              <span className="text-green-700 font-bold">{player.card}</span>
+            ) : (
+              <span className="text-gray-400 font-bold">-</span>
+            );
+          } else {
+            if (player.card !== undefined) {
+              if (player.id === myId) {
+                status = <span className="text-blue-700 font-bold">{player.card}</span>;
+              } else {
+                status = <span className="text-gray-400 font-bold">?</span>;
+              }
+            } else {
+              status = <span className="text-red-500 font-bold">✗</span>;
+            }
+          }
+          return (
+            <div key={i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base flex flex-col items-center" style={{ fontFamily: 'Revalia' }}>
+              <span>{player.name ? player.name : <span className="text-gray-400">Empty</span>}</span>
+              {status}
+            </div>
+          );
+        })}
         {Array.from({ length: 12 - players.length }).map((_, i) => (
           <div key={players.length + i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base" style={{ fontFamily: 'Revalia' }}>
             <span className="text-gray-400">Empty</span>
           </div>
         ))}
       </div>
+      {/* Card selection UI for user */}
       <div className="flex justify-center gap-2 sm:gap-4 mt-4 sm:mt-6 flex-col items-center">
         <div className="flex justify-center gap-2 sm:gap-4 mb-2 sm:mb-4">
-          {["1", "2", "3", "4"].map((label, i) => (
-            <FancyButton key={i} label={label} />
+          {[1, 2, 3, 4].map((label, i) => (
+            <button
+              key={i}
+              className={`px-4 py-2 rounded font-bold shadow border ${players.find(p => p.id === myId)?.card === label ? 'bg-lime-400 text-white' : 'bg-gray-200 text-black hover:bg-lime-200'}`}
+              onClick={() => handleCardSelect(label)}
+              disabled={revealed}
+            >
+              {label}
+            </button>
           ))}
         </div>
         <div className="flex justify-center gap-2 sm:gap-4">
-          {["5", "8", "∞", "☕"].map((label, i) => (
-            <FancyButton key={i} label={label} />
+          {[5, 8, '∞', '☕'].map((label, i) => (
+            <button
+              key={i}
+              className={`px-4 py-2 rounded font-bold shadow border ${players.find(p => p.id === myId)?.card === label ? 'bg-lime-400 text-white' : 'bg-gray-200 text-black hover:bg-lime-200'}`}
+              onClick={() => handleCardSelect(label)}
+              disabled={revealed}
+            >
+              {label}
+            </button>
           ))}
         </div>
       </div>
+      {/* Reveal button for all users */}
+      {!revealed && (
+        <div className="flex justify-center mt-4">
+          <button
+            className="px-4 py-2 rounded bg-gradient-to-br from-orange-400 to-red-400 text-white font-bold shadow hover:from-orange-500 hover:to-red-500 transition-colors duration-200"
+            onClick={handleReveal}
+          >
+            Reveal Cards
+          </button>
+        </div>
+      )}
       <div className="flex justify-center mt-4">
         <button
           className="px-4 py-2 rounded bg-gradient-to-br from-lime-400 to-teal-400 text-white font-bold shadow hover:from-lime-500 hover:to-teal-500 transition-colors duration-200"

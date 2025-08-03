@@ -1,10 +1,14 @@
 import { useEffect, useRef } from "react";
 
-export function useRoomWebSocket({ roomCode, userName, onUserList, onRoomCreated }: {
+export function useRoomWebSocket({ roomCode, userName, onUserList, onRoomCreated, onCard, onReveal, onHost, onUserId }: {
   roomCode: string | null,
   userName: string | null,
-  onUserList: (users: string[]) => void,
+  onUserList: (users: {id: string, name: string}[]) => void,
   onRoomCreated?: (roomCode: string) => void,
+  onCard?: (id: string, card: any) => void,
+  onReveal?: () => void,
+  onHost?: (hostId: string) => void,
+  onUserId?: (userId: string) => void,
 }) {
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -28,6 +32,14 @@ export function useRoomWebSocket({ roomCode, userName, onUserList, onRoomCreated
           onUserList(data.users);
         } else if (data.type === "roomCreated" && onRoomCreated) {
           onRoomCreated(data.roomCode);
+        } else if (data.type === "cardSelected" && onCard) {
+          onCard(data.userId, data.card);
+        } else if (data.type === "revealCards" && onReveal) {
+          onReveal();
+        } else if (data.type === "host" && onHost) {
+          onHost(data.hostId);
+        } else if (data.type === "userId" && onUserId) {
+          onUserId(data.userId);
         }
       } catch {}
     };
