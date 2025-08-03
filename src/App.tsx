@@ -8,7 +8,7 @@ function App() {
 
   return (
    <div className="flex w-screen h-screen p-4 box-border bg-gray-100">
-      <MeetingRoom />
+      <MeetingRoom className="hidden xl:flex" />
       <DisplayPanel />
     </div>
   )

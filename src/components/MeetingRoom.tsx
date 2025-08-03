@@ -1,12 +1,12 @@
 import { useState } from "react";
 import TableWithChairs from "./TableWithChairs";
 
-export default function MeetingRoom() {
+export default function MeetingRoom({ className = "" }: { className?: string }) {
   const [company, setCompany] = useState("MyCompany");
   const [editing, setEditing] = useState(false);
 
   return (
-    <div className="flex-1 border border-gray-400 p-4 relative bg-white rounded-md shadow-md flex flex-col items-center ">
+    <div className={`flex-1 border border-gray-400 p-4 relative bg-white rounded-md shadow-md flex flex-col items-center ${className}`}>
       <div style={{fontFamily:"Revalia"}} className="text-center font-bold py-2 mb-4 rounded w-full text-lg sm:text-2xl">
         {editing ? (
           <input

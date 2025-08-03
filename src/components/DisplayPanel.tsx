@@ -124,7 +124,7 @@ export default function DisplayPanel() {
 
   return (
     <div
-      className={`flex-[2] border border-gray-400 p-2 sm:p-4 ml-0 sm:ml-4 flex flex-col justify-between rounded-md shadow-md transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
+      className={`flex-1 xl:flex-[2] border border-gray-400 p-2 sm:p-4 ml-0 xl:ml-4 flex flex-col justify-between rounded-md shadow-md transition-colors duration-300 ${darkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}
       style={{ position: 'relative' }}
     >
       {/* Floating Toggle Button */}
@@ -165,32 +165,48 @@ export default function DisplayPanel() {
         </div>
       </div>
       <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3'} gap-2 sm:gap-4 text-center`}>
-        {players.map((player, i) => {
-          let status = null;
-          if (revealed) {
-            status = player.card !== undefined ? (
-              <span className="text-green-700 font-bold">{player.card}</span>
-            ) : (
-              <span className="text-gray-400 font-bold">-</span>
-            );
-          } else {
-            if (player.card !== undefined) {
-              if (player.id === myId) {
-                status = <span className="text-blue-700 font-bold">{player.card}</span>;
-              } else {
-                status = <span className="text-gray-400 font-bold">?</span>;
-              }
+        {(() => {
+          // Sort players when revealed
+          const sortedPlayers = revealed ? [...players].sort((a, b) => {
+            // Custom sort order: no card -> empty slots -> coffee (☕) -> infinity (∞) -> numeric ascending
+            const getSortValue = (card: any) => {
+              if (card === undefined) return 0; // No card given
+              if (card === '☕') return 1000; // Coffee goes last
+              if (card === '∞') return 999; // Infinity goes before coffee
+              if (typeof card === 'number') return card; // Numeric values
+              return parseInt(card) || 500; // Other values go in middle
+            };
+            
+            return getSortValue(a.card) - getSortValue(b.card);
+          }) : players;
+
+          return sortedPlayers.map((player, i) => {
+            let status = null;
+            if (revealed) {
+              status = player.card !== undefined ? (
+                <span className="text-green-700 font-bold">{player.card}</span>
+              ) : (
+                <span className="text-gray-400 font-bold">-</span>
+              );
             } else {
-              status = <span className="text-red-500 font-bold">✗</span>;
+              if (player.card !== undefined) {
+                if (player.id === myId) {
+                  status = <span className="text-blue-700 font-bold">{player.card}</span>;
+                } else {
+                  status = <span className="text-gray-400 font-bold">?</span>;
+                }
+              } else {
+                status = <span className="text-red-500 font-bold">✗</span>;
+              }
             }
-          }
-          return (
-            <div key={i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base flex flex-col items-center" style={{ fontFamily: 'Revalia' }}>
-              <span>{player.name ? player.name : <span className="text-gray-400">Empty</span>}</span>
-              {status}
-            </div>
-          );
-        })}
+            return (
+              <div key={player.id || i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base flex flex-col items-center" style={{ fontFamily: 'Revalia' }}>
+                <span>{player.name ? player.name : <span className="text-gray-400">Empty</span>}</span>
+                {status}
+              </div>
+            );
+          });
+        })()}
         {Array.from({ length: 12 - players.length }).map((_, i) => (
           <div key={players.length + i} className="border border-gray-400 p-1 sm:p-2 rounded text-xs sm:text-base" style={{ fontFamily: 'Revalia' }}>
             <span className="text-gray-400">Empty</span>
